@@ -21,14 +21,11 @@ module Perfs = Perf.Make(SL)
 let roc_bedroc_pr_aucs sl =
   (ROC.auc sl, ROC.bedroc_auc sl, ROC.pr_auc sl)
 
-(* just naming the constant, for readability *)
-let no_AD = -1.0
-
 let mcc_scan_10xCV ncores kernel k trainval =
   let folds = L.cv_folds 10 trainval in
   let score_label_lists =
     L.map (fun (train, valid) ->
-        Common.only_test_single no_AD None
+        Common.only_test_single None
           ncores "/dev/null" kernel k train valid
       ) folds in
   let score_labels =
@@ -161,7 +158,7 @@ let main () =
   let ab: (float * float) option ref = ref None in
   let valAUC, valBED, valPR =
     let score_labels =
-      Common.only_test_single no_AD None
+      Common.only_test_single None
         ncores "/dev/null" kernel k train validate in
     if mcc_scan then
       begin
@@ -176,7 +173,7 @@ let main () =
   Log.info "val AUC=%.3f BED=%.3f PR=%.3f" valAUC valBED valPR;
   (* model testing (on _never_ seen data) *)
   let score_labels_raw =
-    Common.only_test_single no_AD !ab
+    Common.only_test_single !ab
       ncores scores_fn kernel k train_val test in
   let test_AUC, test_BED, test_PR = roc_bedroc_pr_aucs score_labels_raw in
   Log.info "tst AUC=%.3f BED=%.3f PR=%.3f" test_AUC test_BED test_PR;

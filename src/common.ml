@@ -151,7 +151,7 @@ let platt_proba_fun = function
   | None -> (fun _raw_score -> 0.0)
   | Some (a, b) -> ROC.platt_probability a b
 
-let only_test_single kde_threshold maybe_ab ?(no_sort = false)
+let only_test_single maybe_ab ?(no_sort = false)
     ncores scores_fn kernel bwidth training_set test_set =
   let n_acts = ref 0 in
   let n_decs = ref 0 in
@@ -163,26 +163,9 @@ let only_test_single kde_threshold maybe_ab ?(no_sort = false)
     Bstree.(create 50 Two_bands (A.of_list train_mols)) in
   let test_mols = L.map mol_of_line test_set in
   let score_labels =
-    if kde_threshold = -1.0 then (* no AD *)
       L.parmap ncores (
         score_one_single kernel !n_acts !n_decs bwidth mols_bst
       ) test_mols
-    else (* ad-hoc AD *)
-      (* compute KDEs / local data density *)
-      (* only score molecules with a high enough KDE *)
-      let maybe_score_labels =
-        let n_mols = !n_acts + !n_decs in
-        L.parmap ncores (fun mol ->
-            let local_data_density = kde kernel n_mols bwidth mols_bst mol in
-            if local_data_density < kde_threshold
-            then None
-            else (* score-label *)
-              Some (score_one_single kernel !n_acts !n_decs bwidth mols_bst mol)
-          ) test_mols in
-      L.fold_left (fun acc maybe_sl -> match maybe_sl with
-          | None -> acc
-          | Some sl -> sl :: acc
-        ) [] maybe_score_labels
   in
   if no_sort then
     score_labels
