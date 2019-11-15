@@ -1,6 +1,8 @@
 # RanKers
 Reference implementation of the Vanishing Ranking Kernels (VRK) method
 
+![Logo](data/ROC.pdf?raw=true)
+
 # Usage
 
 ```
