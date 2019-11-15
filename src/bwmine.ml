@@ -50,16 +50,15 @@ let main () =
   let train_portion_def = 0.8 in
   if argc = 1 || show_help then
     (eprintf "usage:\n\
-              %s [-i <in.1mop2d> | \
-              --train <train.1mop2d> --test <test.1mop2d>]\n  \
-              -p <float>: proportion of the (randomized) dataset\n  \
+              %s -i <train.txt>\n  \
+              [-p <float>]: proportion of the (randomized) dataset\n  \
               used to train (default=%.2f)\n  \
-              -k {uni|tri|epa|biw}: kernel function choice (default=biw)\n  \
-              -np <int>: max number of processes\n  \
-              -o <filename>: write raw test scores to file\n  \
-              --train <train.1mop2d>: training set (overrides -p)\n  \
-              --valid <valid.1mop2d>: validation set (overrides -p)\n  \
-              --test <test.1mop2d>: test set (overrides -p)\n  \
+              [-k {uni|tri|epa|biw}]: kernel function choice (default=biw)\n  \
+              [-np <int>]: max number of processes (default=1)\n  \
+              [-o <filename>]: write raw test scores to file\n  \
+              [--train <train.txt>]: training set (overrides -p)\n  \
+              [--valid <valid.txt>]: validation set (overrides -p)\n  \
+              [--test <test.txt>]: test set (overrides -p)\n  \
               [-n <int>]: max number of optimization steps; default=%d\n  \
               [--capf <float>]: keep only fraction of decoys\n  \
               [--capx <int>]: keep only X decoys per active\n  \
