@@ -72,7 +72,7 @@ let main () =
               [-q|--quick]: exit early; just after model training\n  \
               [--noplot]: turn off gnuplot\n  \
               [-v]: verbose/debug mode\n  \
-              {-h|--help}: show this help message\n"
+              [-h|--help]: show this help message\n"
        Sys.argv.(0) train_portion_def max_optim_steps_def;
      exit 1);
   let input_fn = CLI.get_string_opt ["-i"] args in
