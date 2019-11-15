@@ -22,7 +22,7 @@ module L = BatList
  1 / (1 + exp(a x + b))
 *)
 
-let roc_curve nfolds nbags auc bedroc pr
+let roc_curve auc bedroc pr
     score_labels_fn roc_curve_fn pr_curve_fn nb_actives nb_decoys ef_curve_fn =
   (* Utls.run_command
    *   (sprintf "cat %s | time croc-curve 2>/dev/null > %s"
@@ -30,7 +30,7 @@ let roc_curve nfolds nbags auc bedroc pr
   let gnuplot_script_fn = Filename.temp_file "ranker_" ".gpl" in
   Utls.with_out_file gnuplot_script_fn (fun out ->
       fprintf out
-        "set title \"|folds|=%d |bags|=%d |A|:|D|=%d:%d AUC=%.3f \
+        "set title \"|A|:|D|=%d:%d AUC=%.3f \
          BED=%.3f PR=%.3f\"\n\
          set xtics out nomirror\n\
          set ytics out nomirror\n\
@@ -50,7 +50,7 @@ let roc_curve nfolds nbags auc bedroc pr
               ''   u 1:3 w lines t 'A_{%%}' , \
               ''   u 1:4 w lines t 'D_{%%}' , \
               f(x) lc rgb 'black' not, g(x) t 'p_a(m)'\n"
-        nfolds nbags nb_actives nb_decoys auc bedroc pr
+        nb_actives nb_decoys auc bedroc pr
         score_labels_fn roc_curve_fn ef_curve_fn pr_curve_fn
     );
   let gnuplot_log = Filename.temp_file "gnuplot_" ".log" in

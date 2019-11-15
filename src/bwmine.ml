@@ -185,6 +185,6 @@ let main () =
     (* Common.draw_kernel kernel k; *)
     let gnuplot_data_fn = Filename.temp_file "rankers_" ".norm_scores" in
     let norm_scores = Common.normalize_scores score_labels_raw in
-    Perfs.evaluate_performance None None 1 1 gnuplot_data_fn norm_scores
+    Perfs.evaluate_performance None None gnuplot_data_fn norm_scores
 
 let () = main ()

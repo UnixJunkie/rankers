@@ -49,7 +49,7 @@ module Make (SL: Score_label.SL) = struct
     (nb_actives, nb_decoys, L.rev rev_res)
 
   let evaluate_performance ?noplot:(noplot = false)
-      top_n maybe_curve_fn nb_folds nb_bags scores_fn score_labels =
+top_n maybe_curve_fn scores_fn score_labels =
     let for_auc = match top_n with
       | None -> score_labels
       | Some n ->
@@ -81,10 +81,8 @@ module Make (SL: Score_label.SL) = struct
     MyList.to_file ef_curve_fn
       (fun (t, ef, ra, rd) -> sprintf "%f %f %f %f" t ef ra rd) ef_curve;
     if not noplot then
-      Gnuplot.roc_curve
-        nb_folds nb_bags auc bedroc pr
+      Gnuplot.roc_curve auc bedroc pr
         scores_fn curve_fn pr_curve_fn nb_acts nb_decs ef_curve_fn;
-    Log.info "nfolds: %d nbags: %d auc: %.3f bedroc: %.3f"
-      nb_folds nb_bags auc bedroc
+    Log.info "auc: %.3f bedroc: %.3f" auc bedroc
 
 end
