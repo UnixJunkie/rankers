@@ -2,6 +2,12 @@
 Reference implementation of the Vanishing Ranking Kernels (VRK) method
 
 ![Logo](data/ROC.png?raw=true)
+*Example ROC curve on a hold-out test set. The test set had 38 active
+molecules and 664 inactives. ROC AUC: 0.861; BEDROC AUC: 0.766; PR AUC: 0.678.
+The ROC curve is in purple; the precision-recall (PR) curve in cyan. The
+probability of activity given a raw score is the red curve obtained.
+The green curve is the number of actives divided by the
+number of decoys as a function of the scores filtering threshold.*
 
 # Usage
 
