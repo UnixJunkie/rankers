@@ -1,7 +1,7 @@
 # RanKers
 Reference implementation of the Vanishing Ranking Kernels (VRK) method
 
-![Logo](data/ROC.pdf?raw=true)
+![Logo](data/ROC.png?raw=true)
 
 # Usage
 
@@ -29,4 +29,16 @@ rankers_bwmine -i <train.txt>
   [--noplot]: turn off gnuplot
   [-v]: verbose/debug mode
   [-h|--help]: show this help message
+```
+
+# Example
+
+Train and test a model:
+```
+rankers_bwmine -i data/tox21_nrar_ligands_std_rand_01.txt
+```
+
+Same, but using 16 cores :
+```
+rankers_bwmine -np 16 -i data/tox21_nrar_ligands_std_rand_01.txt
 ```
