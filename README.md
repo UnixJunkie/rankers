@@ -26,5 +26,5 @@ rankers_bwmine -i <train.txt>
   [-q|--quick]: exit early; just after model training
   [--noplot]: turn off gnuplot
   [-v]: verbose/debug mode
-  {-h|--help}: show this help message
+  [-h|--help]: show this help message
 ```
