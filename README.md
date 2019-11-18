@@ -1,6 +1,28 @@
 # RanKers
 Reference implementation of the Vanishing Ranking Kernels (VRK) method
 
+# How to install the software
+
+For beginners/non opam users:
+download and execute the latest self-installer
+shell script from (https://github.com/UnixJunkie/rankers/releases).
+
+Then execute:
+```
+./rankers-1.0.0.sh ~/usr/rankers-1.0.0
+```
+
+This will create ~/usr/rankers-1.0.0/bin/rankers_bwmine, among other things
+in the same directory.
+
+For opam users:
+```
+opam install rankers
+```
+
+Do not hesitate to contact the author in case you have problems installing
+or using the software or if you have any question.
+
 # Example
 
 ![Logo](data/ROC.png?raw=true)
