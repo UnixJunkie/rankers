@@ -1,6 +1,8 @@
 # RanKers
 Reference implementation of the Vanishing Ranking Kernels (VRK) method
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3546697.svg)](https://doi.org/10.5281/zenodo.3546697)
+
 # How to install the software
 
 For beginners/non opam users:
