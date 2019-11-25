@@ -97,6 +97,12 @@ let eval_solution_indexed ncores kernel indexed_mols params _gradient =
   incr nb_iter;
   perf_metric
 
+let eval_solution_indexed_brute kernel indexed_mols bwidth =
+  let score_labels = L.map (Indexed_mol.score kernel bwidth) indexed_mols in
+  (match !Flags.optim_target with
+   | ROC_AUC -> ROC.auc
+   | PR_AUC -> ROC.pr_auc) score_labels
+
 let optimize_global_bandwidth max_evals ncores kernel indexed_mols =
   reset_iter_and_auc ();
   Nlopt.(
@@ -129,23 +135,47 @@ let optimize_global_bandwidth max_evals ncores kernel indexed_mols =
     (kb, val_auc)
   )
 
-let single_bandwidth_mine max_evals kernel ncores training_set validation_set =
+let index_molecules ncores training_set validation_set =
   let actives, decoys =
     let train_mols = L.map mol_of_line training_set in
     L.partition FpMol.is_active train_mols in
   let n_acts = L.length actives in
   let n_decs = L.length decoys in
   let n = L.length validation_set in
-  let indexed_mols =
-    let valid_mols = L.map mol_of_line validation_set in
-    L.parmapi ~pin_cores:true ncores (fun i valid_mol ->
+  let res =
+    L.parmapi ~pin_cores:true ncores (fun i valid_mol_line ->
+        let valid_mol = mol_of_line valid_mol_line in
         if i mod 100 = 0 then printf "processed: %d/%d\r%!" i n;
         Indexed_mol.create valid_mol actives n_acts decoys n_decs
-      ) valid_mols in
+      ) validation_set in
   printf "processed: %d/%d\n%!" n n;
+  res
+
+(* find a good bandwidth using a global optimization heuristic *)
+let bandwidth_mine_heuristic max_evals kernel ncores training_set validation_set =
+  let indexed_mols = index_molecules ncores training_set validation_set in
   (* ncores=1 because PARALLELIZATION IN THERE DOES NOT ACCELERATE
      eval_solution_indexed's granularity is too fine/efficient *)
   optimize_global_bandwidth max_evals 1 kernel indexed_mols
+
+(* find a good bandwidth using brute force *)
+let bandwidth_mine_brute nsteps kernel ncores training_set validation_set =
+  let indexed_mols = index_molecules ncores training_set validation_set in
+  let lambdas = L.frange 0.0 `To 1.0 nsteps in
+  let lambda_aucs =
+    L.parmap ~pin_cores:true ncores (fun lambda ->
+        let auc = eval_solution_indexed_brute kernel indexed_mols lambda in
+        (lambda, auc)
+      ) lambdas in
+  if !Flags.verbose then
+    L.iter (fun (lambda, auc) ->
+        Log.info "brute: %f %.3f" lambda auc
+      ) lambda_aucs;
+  let _, (best_lambda, best_auc) =
+    L.min_max ~cmp:(fun (_lambda1, auc1) (_lambda2, auc2) ->
+        BatFloat.compare auc1 auc2
+      ) lambda_aucs in
+  (best_lambda, best_auc)
 
 let platt_proba_fun = function
   | None -> (fun _raw_score -> 0.0)
