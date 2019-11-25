@@ -149,11 +149,10 @@ let main () =
     match kb with
     | Some x -> (x, nan)
     | None ->
-      match brute_steps with
-      | None -> Common.bandwidth_mine_heuristic
-                  nsteps kernel ncores train validate
-      | Some brute_n -> Common.bandwidth_mine_brute
-                          brute_n kernel ncores train validate in
+      (match brute_steps with
+       | None -> Common.bandwidth_mine_heuristic nsteps
+       | Some brute_n -> Common.bandwidth_mine_brute brute_n
+      ) kernel ncores train validate in
   Log.info "Kb: %f valAUC: %.3f" k val_auc;
   if early_exit then
     begin
