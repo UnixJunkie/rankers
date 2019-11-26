@@ -203,11 +203,21 @@ let bandwidth_mine_nfolds nsteps kernel ncores train_valid_set nfolds =
             FloatMap.modify lambda (fun prev_aucs -> auc :: prev_aucs) acc2
           ) acc1 one_fold_lambda_aucs
       ) init lambda_aucs in
-  (* average them and optionally log to stdout *)
+  (* average and (optionally) log them *)
   let lambda_avg_aucs =
     FloatMap.fold (fun lambda aucs acc ->
         assert(L.length aucs = nfolds);
         let avg_auc = L.favg aucs in
+        if !Flags.verbose then
+          begin
+            let buff = Buffer.create 80 in
+            bprintf buff "nfolds: %f " lambda;
+            L.iter (fun auc ->
+                bprintf buff " %.3f" auc
+              ) aucs;
+            bprintf buff " %.3f" avg_auc;
+            Log.info "%s" (Buffer.contents buff)
+          end;
         (lambda, avg_auc) :: acc
       ) lambda2aucs [] in
   (* return the best *)
