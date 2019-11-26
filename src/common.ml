@@ -12,6 +12,7 @@ open Printf
 
 module A = MyArray
 module FpMol = Molenc.FpMol
+module FloatMap = BatMap.Float
 module L = MyList
 module Log = Dolog.Log
 module Ht = BatHashtbl
@@ -158,24 +159,71 @@ let bandwidth_mine_heuristic max_evals kernel ncores training_set validation_set
      eval_solution_indexed's granularity is too fine/efficient *)
   optimize_global_bandwidth max_evals 1 kernel indexed_mols
 
-(* find a good bandwidth using brute force *)
-let bandwidth_mine_brute nsteps kernel ncores training_set validation_set =
+let bandwidth_mine_brute_priv nsteps kernel ncores training_set validation_set =
   let indexed_mols = index_molecules ncores training_set validation_set in
   let lambdas = L.frange 0.0 `To 1.0 nsteps in
+  L.parmap ~pin_cores:true ncores (fun lambda ->
+      let auc = eval_solution_indexed_brute kernel indexed_mols lambda in
+      (lambda, auc)
+    ) lambdas
+
+(* find a good bandwidth using brute force *)
+let bandwidth_mine_brute nsteps kernel ncores training_set validation_set =
   let lambda_aucs =
-    L.parmap ~pin_cores:true ncores (fun lambda ->
-        let auc = eval_solution_indexed_brute kernel indexed_mols lambda in
-        (lambda, auc)
-      ) lambdas in
+    bandwidth_mine_brute_priv nsteps kernel ncores training_set validation_set in
   if !Flags.verbose then
     L.iter (fun (lambda, auc) ->
         Log.info "brute: %f %.3f" lambda auc
       ) lambda_aucs;
-  let _, (best_lambda, best_auc) =
-    L.min_max ~cmp:(fun (_lambda1, auc1) (_lambda2, auc2) ->
-        BatFloat.compare auc1 auc2
-      ) lambda_aucs in
-  (best_lambda, best_auc)
+  L.maximum (fun (_lambda1, auc1) (_lambda2, auc2) ->
+      BatFloat.compare auc1 auc2
+    ) lambda_aucs
+
+(* find a good bandwidth using NxCV.
+   Since the optimizer doesn't explore all values of lambda, we cannot use it
+   during several folds cross validation; hence we use brute force *)
+let bandwidth_mine_nfolds nsteps kernel ncores train_valid_set nfolds =
+  let folds = L.cv_folds nfolds train_valid_set in
+  (* compute AUC as a function of lambda on each validation fold *)
+  let lambda_aucs =
+    L.mapi (fun i (train, valid) ->
+        Log.info "fold: %d" i;
+        bandwidth_mine_brute_priv nsteps kernel ncores train valid
+      ) folds in
+  (* gather results *)
+  let init =
+    let lambdas = L.frange 0.0 `To 1.0 nsteps in
+    (* init map with all possible lambdas, for simplicity *)
+    L.fold_left (fun acc lambda ->
+        FloatMap.add lambda [] acc
+      ) FloatMap.empty lambdas in
+  let lambda2aucs =
+    L.fold_left (fun acc1 one_fold_lambda_aucs ->
+        L.fold_left (fun acc2 (lambda, auc) ->
+            FloatMap.modify lambda (fun prev_aucs -> auc :: prev_aucs) acc2
+          ) acc1 one_fold_lambda_aucs
+      ) init lambda_aucs in
+  (* average and (optionally) log them *)
+  let lambda_avg_aucs =
+    FloatMap.fold (fun lambda aucs acc ->
+        assert(L.length aucs = nfolds);
+        let avg_auc = L.favg aucs in
+        if !Flags.verbose then
+          begin
+            let buff = Buffer.create 80 in
+            bprintf buff "nfolds: %f" lambda;
+            L.iter (fun auc ->
+                bprintf buff " %.3f" auc
+              ) aucs;
+            bprintf buff " %.3f" avg_auc;
+            Log.info "%s" (Buffer.contents buff)
+          end;
+        (lambda, avg_auc) :: acc
+      ) lambda2aucs [] in
+  (* return the best *)
+  L.maximum (fun (_lambda1, auc1) (_lambda2, auc2) ->
+      BatFloat.compare auc1 auc2
+    ) lambda_avg_aucs
 
 let platt_proba_fun = function
   | None -> (fun _raw_score -> 0.0)

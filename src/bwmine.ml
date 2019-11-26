@@ -58,6 +58,8 @@ let main () =
               [--test <test.txt>]: test set (overrides -p)\n  \
               [-n <int>]: max number of heuristic optim. steps; default=%d\n  \
               [--brute <int>]: number of brute optim. steps\n  \
+              [--NxCV <int>]: number of folds of cross validation\n  \
+              (also requires --brute)\n  \
               [--capf <float>]: keep only fraction of decoys\n  \
               [--capx <int>]: keep only X decoys per active\n  \
               [--capi <int>]: limit total number of molecules\n  \
@@ -90,6 +92,7 @@ let main () =
   let kernel = Kernel.of_string k_str in
   let nsteps = CLI.get_int_def ["-n"] args max_optim_steps_def in
   let brute_steps = CLI.get_int_opt ["--brute"] args in
+  let nfolds = CLI.get_int_opt ["--NxCV"] args in
   let ncores = CLI.get_int_def ["-np"] args 1 in
   let maybe_seed = CLI.get_int_opt ["--seed"] args in
   let early_exit = CLI.get_set_bool ["-q"; "--quick"] args in
@@ -149,10 +152,17 @@ let main () =
     match kb with
     | Some x -> (x, nan)
     | None ->
-      (match brute_steps with
-       | None -> Common.bandwidth_mine_heuristic nsteps
-       | Some brute_n -> Common.bandwidth_mine_brute brute_n
-      ) kernel ncores train validate in
+      begin match brute_steps with
+        | None -> Common.bandwidth_mine_heuristic
+                    nsteps kernel ncores train validate
+        | Some brute_n ->
+          begin match nfolds with
+            | None -> Common.bandwidth_mine_brute
+                        brute_n kernel ncores train validate
+            | Some n_folds -> Common.bandwidth_mine_nfolds
+                                brute_n kernel ncores train_val n_folds
+          end
+      end in
   Log.info "Kb: %f valAUC: %.3f" k val_auc;
   if early_exit then
     begin

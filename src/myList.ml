@@ -203,15 +203,13 @@ let rev_rank_by cmp l =
   let rev_sorted = rev_sort cmp l in
   mapi (fun i x -> (i, x)) rev_sorted
 
+(* List.min with a comparison function *)
+let minimum cmp l =
+  fst (min_max ~cmp l)
+
 (* List.max with a comparison function *)
 let maximum cmp l =
-  let max_cmp x y =
-    let res = cmp x y in
-    if res >= 0 then x
-    else y in
-  match l with
-  | [] -> failwith "MyList.maximum: empty list"
-  | x :: xs -> fold_left max_cmp x xs
+  snd (min_max ~cmp l)
 
 let numerate offset l =
   mapi (fun i x -> (i + offset, x)) l
