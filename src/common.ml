@@ -211,7 +211,7 @@ let bandwidth_mine_nfolds nsteps kernel ncores train_valid_set nfolds =
         if !Flags.verbose then
           begin
             let buff = Buffer.create 80 in
-            bprintf buff "nfolds: %f " lambda;
+            bprintf buff "nfolds: %f" lambda;
             L.iter (fun auc ->
                 bprintf buff " %.3f" auc
               ) aucs;
