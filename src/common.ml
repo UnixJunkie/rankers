@@ -174,8 +174,8 @@ let bandwidth_mine_brute nsteps kernel ncores training_set validation_set =
     L.iter (fun (lambda, auc) ->
         Log.info "brute: %f %.3f" lambda auc
       ) lambda_aucs;
-  let _, (best_lambda, best_auc) =
-    L.min_max ~cmp:(fun (_lambda1, auc1) (_lambda2, auc2) ->
+  let best_lambda, best_auc =
+    L.maximum (fun (_lambda1, auc1) (_lambda2, auc2) ->
         BatFloat.compare auc1 auc2
       ) lambda_aucs in
   (best_lambda, best_auc)
