@@ -158,15 +158,18 @@ let bandwidth_mine_heuristic max_evals kernel ncores training_set validation_set
      eval_solution_indexed's granularity is too fine/efficient *)
   optimize_global_bandwidth max_evals 1 kernel indexed_mols
 
-(* find a good bandwidth using brute force *)
-let bandwidth_mine_brute nsteps kernel ncores training_set validation_set =
+let bandwidth_mine_brute_priv nsteps kernel ncores training_set validation_set =
   let indexed_mols = index_molecules ncores training_set validation_set in
   let lambdas = L.frange 0.0 `To 1.0 nsteps in
+  L.parmap ~pin_cores:true ncores (fun lambda ->
+      let auc = eval_solution_indexed_brute kernel indexed_mols lambda in
+      (lambda, auc)
+    ) lambdas
+
+(* find a good bandwidth using brute force *)
+let bandwidth_mine_brute nsteps kernel ncores training_set validation_set =
   let lambda_aucs =
-    L.parmap ~pin_cores:true ncores (fun lambda ->
-        let auc = eval_solution_indexed_brute kernel indexed_mols lambda in
-        (lambda, auc)
-      ) lambdas in
+    bandwidth_mine_brute_priv nsteps kernel ncores training_set validation_set in
   if !Flags.verbose then
     L.iter (fun (lambda, auc) ->
         Log.info "brute: %f %.3f" lambda auc
@@ -176,6 +179,10 @@ let bandwidth_mine_brute nsteps kernel ncores training_set validation_set =
         BatFloat.compare auc1 auc2
       ) lambda_aucs in
   (best_lambda, best_auc)
+
+(* find a good bandwidth using brute force and NxCV *)
+let bandwidth_mine_brute_nfolds _nsteps _kernel _ncores _train_valid_set _nfolds =
+  failwith "not implemented yet"
 
 let platt_proba_fun = function
   | None -> (fun _raw_score -> 0.0)
