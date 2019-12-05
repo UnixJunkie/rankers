@@ -159,14 +159,16 @@ let main () =
           begin match nfolds with
             | None -> Common.bandwidth_mine_brute
                         brute_n kernel ncores train validate
-            | Some n_folds -> Common.bandwidth_mine_nfolds
-                                brute_n kernel ncores train_val n_folds
+            | Some n_folds ->
+              let train_val_test = L.rev_append test train_val in
+              Common.bandwidth_mine_nfolds
+                brute_n kernel ncores train_val_test n_folds
           end
       end in
   Log.info "Kb: %f valAUC: %.3f" k val_auc;
-  if early_exit then
+  if early_exit || Option.is_some nfolds then
     begin
-      Log.info "val AUC=%.3f" val_auc;
+      Log.info "Early exit or no test partition because of NxCV";
       exit 0
     end;
   (* AUC and BEDROC on validation set *)
