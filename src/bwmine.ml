@@ -1,12 +1,11 @@
 (* Copyright (C) 2019, Francois Berenger
-
    Yamanishi laboratory,
    Department of Bioscience and Bioinformatics,
    Faculty of Computer Science and Systems Engineering,
    Kyushu Institute of Technology,
-   680-4 Kawazu, Iizuka, Fukuoka, 820-8502, Japan. *)
+   680-4 Kawazu, Iizuka, Fukuoka, 820-8502, Japan.
 
-(* Bandwidth miner (rewrite of Ddpr, which was a rewrite of RanKers) *)
+   Vanishing Ranking Kernels bandwidth miner *)
 
 open Printf
 
@@ -152,18 +151,19 @@ let main () =
     match kb with
     | Some x -> (x, nan)
     | None ->
-      begin match brute_steps with
-        | None -> Common.bandwidth_mine_heuristic
-                    nsteps kernel ncores train validate
-        | Some brute_n ->
-          begin match nfolds with
-            | None -> Common.bandwidth_mine_brute
-                        brute_n kernel ncores train validate
-            | Some n_folds ->
-              let train_val_test = L.rev_append test train_val in
-              Common.bandwidth_mine_nfolds
-                brute_n kernel ncores train_val_test n_folds
-          end
+      begin match (brute_steps, nfolds) with
+        | (Some brute_n, Some k_folds) -> (* [k] xCV using [brute_n] steps *)
+          let train_val_test = L.rev_append test train_val in
+          Common.bandwidth_mine_nfolds
+            brute_n kernel ncores train_val_test k_folds
+        | (Some brute_n, None) -> (* brute force using [brute_n] steps *)
+          Common.bandwidth_mine_brute
+            brute_n kernel ncores train validate
+        | (None, Some _n_folds) ->
+          failwith "Bwmine: --NxCV also requires --brute"
+        | (None, None) ->
+          Common.bandwidth_mine_heuristic
+            nsteps kernel ncores train validate
       end in
   Log.info "Kb: %f valAUC: %.3f" k val_auc;
   if early_exit || Option.is_some nfolds then
