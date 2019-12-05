@@ -153,13 +153,15 @@ let index_molecules ncores training_set validation_set =
   res
 
 (* find a good bandwidth using a global optimization heuristic *)
-let bandwidth_mine_heuristic max_evals kernel ncores training_set validation_set =
+let bandwidth_mine_heuristic
+    max_evals kernel ncores training_set validation_set =
   let indexed_mols = index_molecules ncores training_set validation_set in
   (* ncores=1 because PARALLELIZATION IN THERE DOES NOT ACCELERATE
      eval_solution_indexed's granularity is too fine/efficient *)
   optimize_global_bandwidth max_evals 1 kernel indexed_mols
 
-let bandwidth_mine_brute_priv nsteps kernel ncores training_set validation_set =
+let bandwidth_mine_brute_priv
+    nsteps kernel ncores training_set validation_set =
   let indexed_mols = index_molecules ncores training_set validation_set in
   let lambdas = L.frange 0.0 `To 1.0 nsteps in
   L.parmap ~pin_cores:true ncores (fun lambda ->
@@ -170,7 +172,8 @@ let bandwidth_mine_brute_priv nsteps kernel ncores training_set validation_set =
 (* find a good bandwidth using brute force *)
 let bandwidth_mine_brute nsteps kernel ncores training_set validation_set =
   let lambda_aucs =
-    bandwidth_mine_brute_priv nsteps kernel ncores training_set validation_set in
+    bandwidth_mine_brute_priv
+      nsteps kernel ncores training_set validation_set in
   if !Flags.verbose then
     L.iter (fun (lambda, auc) ->
         Log.info "brute: %f %.3f" lambda auc
@@ -304,7 +307,8 @@ let get_cap maybe_frac maybe_num maybe_fact =
            "Common.get_cap: choose only one of {Fraction|Number|Factor}"
 
 (* Only keep a fraction of the decoys, but retain all actives.
- * Fail in case it is not possible to have at least as many decoys as actives. *)
+   Fail in case it is not possible to have at least as many decoys
+   as actives. *)
 let rec maybe_cap rng (cap_m: capping_method) numbered_lines =
   match cap_m with
   | No_cap ->
