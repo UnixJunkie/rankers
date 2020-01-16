@@ -30,7 +30,10 @@ let normalize_scores score_labels =
   L.map (fun (n, s) -> (n, normalize s)) score_labels
 
 let mol_of_line (i, l) =
-  FpMol.parse_one i l
+  try FpMol.parse_one i l
+  with exn ->
+    let () = Log.fatal "Common.mol_of_line: invalid line %d: %s" i l in
+    raise exn
 
 let sum_contribs kernel bwidth mols_bst test_mol =
   let nearby = Bstree.neighbors test_mol bwidth mols_bst in
