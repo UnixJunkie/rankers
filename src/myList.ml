@@ -10,19 +10,19 @@ open Printf
 
 include BatList
 
-let to_string to_str l =
-  let buff = Buffer.create 80 in
-  Buffer.add_char buff '[';
-  iteri (fun i x ->
-      if i > 0 then Buffer.add_char buff ';';
-      Buffer.add_string buff (to_str x);
-    ) l;
-  Buffer.add_char buff ']';
-  Buffer.contents buff
+(* let to_string to_str l =
+ *   let buff = Buffer.create 80 in
+ *   Buffer.add_char buff '[';
+ *   iteri (fun i x ->
+ *       if i > 0 then Buffer.add_char buff ';';
+ *       Buffer.add_string buff (to_str x);
+ *     ) l;
+ *   Buffer.add_char buff ']';
+ *   Buffer.contents buff *)
 
-let of_string of_str s =
-  let s' = BatString.chop ~l:1 ~r:1 s in
-  map of_str (BatString.nsplit s' ~by:";")
+(* let of_string of_str s =
+ *   let s' = BatString.chop ~l:1 ~r:1 s in
+ *   map of_str (BatString.nsplit s' ~by:";") *)
 
 (* count elements satisfying 'p' *)
 let filter_count p l =
@@ -40,14 +40,14 @@ let filter_counts p l =
     ) l;
   (!ok_count, !ko_count)
 
-(* only map 'f' on elements satisfying 'p' *)
-let filter_map p f l =
-  let res =
-    fold_left (fun acc x ->
-        if p x then (f x) :: acc
-        else acc
-      ) [] l in
-  rev res
+(* (\* only map 'f' on elements satisfying 'p' *\)
+ * let filter_map p f l =
+ *   let res =
+ *     fold_left (fun acc x ->
+ *         if p x then (f x) :: acc
+ *         else acc
+ *       ) [] l in
+ *   rev res *)
 
 (* split a list into n parts (the last part might have
    a different number of elements) *)
@@ -105,55 +105,55 @@ let parmapi ?init:(init = fun _ -> ()) ?pin_cores:(pin_cores = false)
       Parmap.parmapi ~ncores ~init ~chunksize:1 f (Parmap.L l)
     end
 
-let pariter ?init:(init = fun _ -> ())
-    (ncores: int) (f: 'a -> unit) (l: 'a list): unit =
-  if ncores <= 1 then iter f l (* don't invoke parmap in vain *)
-  else
-    (Parmap.disable_core_pinning ();
-     Parmap.pariter ~ncores ~init ~chunksize:1 f (Parmap.L l))
+(* let pariter ?init:(init = fun _ -> ())
+ *     (ncores: int) (f: 'a -> unit) (l: 'a list): unit =
+ *   if ncores <= 1 then iter f l (\* don't invoke parmap in vain *\)
+ *   else
+ *     (Parmap.disable_core_pinning ();
+ *      Parmap.pariter ~ncores ~init ~chunksize:1 f (Parmap.L l)) *)
 
-let pariteri ?init:(init = fun _ -> ())
-    (ncores: int) (f: int -> 'a -> unit) (l: 'a list): unit =
-  if ncores <= 1 then iteri f l (* don't invoke parmap in vain *)
-  else
-    (Parmap.disable_core_pinning ();
-     Parmap.pariteri ~ncores ~init ~chunksize:1 f (Parmap.L l))
+(* let pariteri ?init:(init = fun _ -> ())
+ *     (ncores: int) (f: int -> 'a -> unit) (l: 'a list): unit =
+ *   if ncores <= 1 then iteri f l (\* don't invoke parmap in vain *\)
+ *   else
+ *     (Parmap.disable_core_pinning ();
+ *      Parmap.pariteri ~ncores ~init ~chunksize:1 f (Parmap.L l)) *)
 
-(* parallel List.filter; elements satisfying p will be disordered *)
-let parfilter (ncores: int) (p: 'a -> bool) (l: 'a list): 'a list =
-  if ncores <= 1 then filter p l (* don't invoke parmap in vain *)
-  else
-    let () = Parmap.disable_core_pinning () in
-    let f x =
-      (p x, x) in
-    let l' = Parmap.parmap ~ncores ~chunksize:1 f (Parmap.L l) in
-    fold_left (fun acc (p_x, x) ->
-        if p_x then x :: acc
-        else acc
-      ) [] l'
+(* (\* parallel List.filter; elements satisfying p will be disordered *\)
+ * let parfilter (ncores: int) (p: 'a -> bool) (l: 'a list): 'a list =
+ *   if ncores <= 1 then filter p l (\* don't invoke parmap in vain *\)
+ *   else
+ *     let () = Parmap.disable_core_pinning () in
+ *     let f x =
+ *       (p x, x) in
+ *     let l' = Parmap.parmap ~ncores ~chunksize:1 f (Parmap.L l) in
+ *     fold_left (fun acc (p_x, x) ->
+ *         if p_x then x :: acc
+ *         else acc
+ *       ) [] l' *)
 
-(* List.combine for 4 lists *)
-let combine4 l1 l2 l3 l4 =
-  let rec loop acc = function
-    | ([], [], [], []) -> rev acc
-    | (w :: ws, x :: xs, y :: ys, z :: zs) ->
-      loop ((w, x, y, z) :: acc) (ws, xs, ys, zs)
-    | _ -> raise (Invalid_argument "MyList.combine4: list lengths differ")
-  in
-  loop [] (l1, l2, l3, l4)
+(* (\* List.combine for 4 lists *\)
+ * let combine4 l1 l2 l3 l4 =
+ *   let rec loop acc = function
+ *     | ([], [], [], []) -> rev acc
+ *     | (w :: ws, x :: xs, y :: ys, z :: zs) ->
+ *       loop ((w, x, y, z) :: acc) (ws, xs, ys, zs)
+ *     | _ -> raise (Invalid_argument "MyList.combine4: list lengths differ")
+ *   in
+ *   loop [] (l1, l2, l3, l4) *)
 
-(* alias *)
-let fold = fold_left
+(* (\* alias *\)
+ * let fold = fold_left *)
 
 let really_take n l =
   let res = take n l in
   assert(length res = n);
   res
 
-(* non reproducible randomization of a list *)
-let random_shuffle l =
-  let rng = BatRandom.State.make_self_init () in
-  shuffle ~state:rng l
+(* (\* non reproducible randomization of a list *\)
+ * let random_shuffle l =
+ *   let rng = BatRandom.State.make_self_init () in
+ *   shuffle ~state:rng l *)
 
 let rev_combine l1 l2 =
   let rec loop acc l r =
@@ -164,44 +164,44 @@ let rev_combine l1 l2 =
   in
   loop [] l1 l2
 
-(* filter using bit-mask [m] *)
-let filter_mask m l =
-  let rec loop acc = function
-    | [] -> acc
-    | (p, x) :: rest -> loop (if p then x :: acc else acc) rest
-  in
-  loop [] (rev_combine m l)
+(* (\* filter using bit-mask [m] *\)
+ * let filter_mask m l =
+ *   let rec loop acc = function
+ *     | [] -> acc
+ *     | (p, x) :: rest -> loop (if p then x :: acc else acc) rest
+ *   in
+ *   loop [] (rev_combine m l) *)
 
-(* create a list of lists of [n] elements *)
-let group_by n l =
-  let rec loop acc = function
-    | [] -> rev acc
-    | l' ->
-      let header, rest = takedrop n l' in
-      loop (header :: acc) rest
-  in
-  loop [] l
+(* (\* create a list of lists of [n] elements *\)
+ * let group_by n l =
+ *   let rec loop acc = function
+ *     | [] -> rev acc
+ *     | l' ->
+ *       let header, rest = takedrop n l' in
+ *       loop (header :: acc) rest
+ *   in
+ *   loop [] l *)
 
-let overlapping_pairs l =
-  let rec loop acc = function
-    | [_] | [] -> rev acc (* cannot make pair *)
-    | x :: y :: rest ->
-      let xy = rev_append x y in
-      loop (xy :: acc) (y :: rest) in
-  loop [] l
+(* let overlapping_pairs l =
+ *   let rec loop acc = function
+ *     | [_] | [] -> rev acc (\* cannot make pair *\)
+ *     | x :: y :: rest ->
+ *       let xy = rev_append x y in
+ *       loop (xy :: acc) (y :: rest) in
+ *   loop [] l *)
 
 let rev_sort cmp l =
   sort (fun x y -> cmp y x) l
 
-(* incr. sort by [cmp] then assignation of ranks *)
-let rank_by cmp l =
-  let sorted = sort cmp l in
-  mapi (fun i x -> (i, x)) sorted
+(* (\* incr. sort by [cmp] then assignation of ranks *\)
+ * let rank_by cmp l =
+ *   let sorted = sort cmp l in
+ *   mapi (fun i x -> (i, x)) sorted *)
 
-(* decr. sort by [cmp] then assignation of ranks *)
-let rev_rank_by cmp l =
-  let rev_sorted = rev_sort cmp l in
-  mapi (fun i x -> (i, x)) rev_sorted
+(* (\* decr. sort by [cmp] then assignation of ranks *\)
+ * let rev_rank_by cmp l =
+ *   let rev_sorted = rev_sort cmp l in
+ *   mapi (fun i x -> (i, x)) rev_sorted *)
 
 (* List.min with a comparison function *)
 let minimum cmp l =
