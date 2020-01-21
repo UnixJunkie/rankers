@@ -3,4 +3,4 @@
   (names bwmine bwexploit)
   (public_names rankers_bwmine rankers_bwexploit)
   (flags (:standard -g))
-  (libraries molenc parmap cpm nlopt parany minicli))
+  (libraries molenc parmap cpm parany minicli))

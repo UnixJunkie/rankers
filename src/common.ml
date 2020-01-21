@@ -107,7 +107,9 @@ let eval_solution_indexed_brute kernel indexed_mols bwidth =
    | ROC_AUC -> ROC.auc
    | PR_AUC -> ROC.pr_auc) score_labels
 
-let optimize_global_bandwidth max_evals ncores kernel indexed_mols =
+let optimize_global_bandwidth _max_evals _ncores _kernel _indexed_mols =
+  failwith "Common.optimize_global_bandwidth: Nlopt not available: use --brute"
+(*
   reset_iter_and_auc ();
   Nlopt.(
     (* local optimizer that will be passed to the global one *)
@@ -138,6 +140,7 @@ let optimize_global_bandwidth max_evals ncores kernel indexed_mols =
     let kb = params.(0) in
     (kb, val_auc)
   )
+*)
 
 let index_molecules ncores training_set validation_set =
   let actives, decoys =
