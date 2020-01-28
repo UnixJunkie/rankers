@@ -182,13 +182,6 @@ let main () =
       Some (a, b)
     else
       None in
-  (* AUC and BEDROC on validation set *)
-  let valAUC, valBED, valPR =
-    let score_labels =
-      Common.only_test_single None
-        ncores "/dev/null" kernel k train validate in
-    roc_bedroc_pr_aucs score_labels in
-  Log.info "val AUC=%.3f BED=%.3f PR=%.3f" valAUC valBED valPR;
   (* model testing (on _never_ seen data) *)
   let score_labels_raw =
     Common.only_test_single ab
