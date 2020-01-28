@@ -171,26 +171,19 @@ let main () =
       Log.info "Early exit or no test partition because of NxCV";
       exit 0
     end;
-  (* AUC and BEDROC on validation set *)
-  let ab: (float * float) option ref = ref None in
-  let valAUC, valBED, valPR =
-    let score_labels =
-      Common.only_test_single None
-        ncores "/dev/null" kernel k train validate in
+  let ab =
     if mcc_scan then
-      begin
-        let t, mcc10x, auc10x, a, b =
-          mcc_scan_10xCV ncores kernel k train_val in
-        Log.info "classif.thresh.: %f" t;
-        Log.info "10xMCC: %.3f 10xAUC: %.3f" mcc10x auc10x;
-        Log.info "Platt(a,b): %f %f" a b;
-        ab := Some (a, b)
-      end;
-    roc_bedroc_pr_aucs score_labels in
-  Log.info "val AUC=%.3f BED=%.3f PR=%.3f" valAUC valBED valPR;
+      (* Platt scaling *)
+      let t, mcc10x, auc10x, a, b =
+        mcc_scan_10xCV ncores kernel k train_val in
+      Log.info "classif.thresh.: %f" t;
+      Log.info "10xMCC: %.3f 10xAUC: %.3f" mcc10x auc10x;
+      Log.info "Platt(a,b): %f %f" a b;
+      Some (a, b)
+    else None in
   (* model testing (on _never_ seen data) *)
   let score_labels_raw =
-    Common.only_test_single !ab
+    Common.only_test_single ab
       ncores scores_fn kernel k train_val test in
   let test_AUC, test_BED, test_PR = roc_bedroc_pr_aucs score_labels_raw in
   Log.info "tst AUC=%.3f BED=%.3f PR=%.3f" test_AUC test_BED test_PR;
