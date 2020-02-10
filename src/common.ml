@@ -289,8 +289,10 @@ let mcc_scan score_labels =
         let mcc = ROC.mcc t score_labels in
         (t, mcc)
       ) thresholds in
-  let _mcc_min, (threshold, mcc_max) =
-    L.min_max ~cmp:(fun x y -> BatFloat.compare (snd x) (snd y)) mccs in
+  let (_tmin, _mcc_min), (threshold, mcc_max) =
+    L.min_max ~cmp:(fun (_t1, mcc1) (_t2, mcc2) ->
+        BatFloat.compare (mcc1) (mcc2)
+      ) mccs in
   (threshold, mcc_max)
 
 type capping_method =
