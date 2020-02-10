@@ -70,7 +70,7 @@ let score_one_single kernel n_acts n_decs bwidth mols_bst test_mol =
   let name = FpMol.get_name test_mol in
   let act_contrib, dec_contrib =
     score_one_single_raw kernel n_acts n_decs bwidth mols_bst test_mol in
-  let score = act_contrib -. dec_contrib in
+  let score = Utls.score_mol act_contrib dec_contrib in
   SL.create name score
 
 (* variables to monitor optimization progress *)

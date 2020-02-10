@@ -65,6 +65,8 @@ let main () =
               (but keep all actives)\n  \
               [--seed <int>: fix random seed]\n  \
               [--pr]: use PR AUC instead of ROC AUC during optimization\n  \
+              [--proba]: use KDE probability to score molecules\n  \
+              (default=KDE difference)\n  \
               [-kb <float>]: user-chosen kernel bandwidth\n  \
               [--mcc-scan]: scan classif. threshold to maximize MCC\n  \
               [--tap]: tap the train-valid-test partitions to disk\n  \
@@ -99,6 +101,8 @@ let main () =
   Flags.verbose := CLI.get_set_bool ["-v"] args;
   if CLI.get_set_bool ["--pr"] args then
     Flags.optim_target := PR_AUC;
+  if CLI.get_set_bool ["--proba"] args then
+    Flags.score_fun := Probability;
   let no_plot = CLI.get_set_bool ["--noplot"] args in
   CLI.finalize ();
   let rng = match maybe_seed with

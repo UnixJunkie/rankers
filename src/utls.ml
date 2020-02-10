@@ -438,3 +438,8 @@ let min_max x y =
     (x, y)
   else
     (y, x)
+
+let score_mol act_contrib dec_contrib =
+  match !Flags.score_fun with
+  | Difference -> act_contrib -. dec_contrib (* default *)
+  | Probability -> act_contrib /. (act_contrib +. dec_contrib)
