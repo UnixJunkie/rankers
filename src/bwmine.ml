@@ -170,7 +170,7 @@ let main () =
             nsteps kernel ncores train validate
       end in
   Log.info "Kb: %f valAUC: %.3f" k val_auc;
-  if early_exit || Option.is_some nfolds then
+  if early_exit || BatOption.is_some nfolds then
     begin
       Log.info "Early exit or no test partition because of NxCV";
       exit 0
