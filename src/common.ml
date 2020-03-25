@@ -147,7 +147,7 @@ let index_molecules ncores training_set validation_set =
   let n_decs = L.length decoys in
   let n = L.length validation_set in
   let res =
-    L.parmapi ~pin_cores:true ncores (fun i valid_mol_line ->
+    L.parmapi ~pin_cores:true ~ncores (fun i valid_mol_line ->
         let valid_mol = mol_of_line valid_mol_line in
         if i mod 100 = 0 then printf "processed: %d/%d\r%!" i n;
         Indexed_mol.create valid_mol actives n_acts decoys n_decs
