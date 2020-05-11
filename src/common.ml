@@ -282,7 +282,14 @@ let mcc_scan score_labels =
     L.min_max ~cmp:(fun x y ->
         BatFloat.compare (SL.get_score x) (SL.get_score y)
       ) score_labels in
-  let smin, smax = SL.(get_score smin', get_score smax') in
+  let smin, smax =
+    if !Flags.score_fun = Probability then
+      (* the min proba is NaN instead of being 0.0;
+       * since the proba is undefined in parts of the chemical space
+       * when using vanishing kernels *)
+      (0.0, SL.get_score smax')
+    else
+      SL.(get_score smin', get_score smax') in
   let thresholds = L.frange smin `To smax 100 in
   let mccs =
     L.map (fun t ->
