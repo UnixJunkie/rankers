@@ -287,7 +287,7 @@ let mcc_scan score_labels =
       (* the min proba is NaN instead of being 0.0;
        * since the proba is undefined in parts of the chemical space
        * when using vanishing kernels *)
-      (0.0, SL.get_score smax')
+      (0.0, 1.0)
     else
       SL.(get_score smin', get_score smax') in
   let thresholds = L.frange smin `To smax 100 in
