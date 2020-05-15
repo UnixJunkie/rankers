@@ -85,7 +85,7 @@ let eval_solution_indexed ncores kernel indexed_mols params _gradient =
   (* we don't have a gradient => _gradient *)
   let bwidth = params.(0) in
   let score_labels =
-    L.parmap ncores (
+    Parany.Parmap.parmap ncores (
       Indexed_mol.score kernel bwidth
     ) indexed_mols in
   let perf_metric =
@@ -147,7 +147,7 @@ let index_molecules ncores training_set validation_set =
   let n_decs = L.length decoys in
   let n = L.length validation_set in
   let res =
-    L.parmapi ~pin_cores:true ~ncores (fun i valid_mol_line ->
+    L.parmapi ~pin_cores:true ncores (fun i valid_mol_line ->
         let valid_mol = mol_of_line valid_mol_line in
         if i mod 100 = 0 then printf "processed: %d/%d\r%!" i n;
         Indexed_mol.create valid_mol actives n_acts decoys n_decs
@@ -167,7 +167,7 @@ let bandwidth_mine_brute_priv
     nsteps kernel ncores training_set validation_set =
   let indexed_mols = index_molecules ncores training_set validation_set in
   let lambdas = L.frange 0.0 `To 1.0 nsteps in
-  L.parmap ~pin_cores:true ncores (fun lambda ->
+  Parany.Parmap.parmap ~core_pin:true ncores (fun lambda ->
       let auc = eval_solution_indexed_brute kernel indexed_mols lambda in
       (lambda, auc)
     ) lambdas
@@ -247,7 +247,7 @@ let only_test_single maybe_ab ?(no_sort = false)
     Bstree.(create 50 Two_bands (A.of_list train_mols)) in
   let test_mols = L.map mol_of_line test_set in
   let score_labels =
-      L.parmap ncores (
+      Parany.Parmap.parmap ncores (
         score_one_single kernel !n_acts !n_decs bwidth mols_bst
       ) test_mols
   in
