@@ -167,7 +167,7 @@ let bandwidth_mine_brute_priv
     nsteps kernel ncores training_set validation_set =
   let indexed_mols = index_molecules ncores training_set validation_set in
   let lambdas = L.frange 0.0 `To 1.0 nsteps in
-  Parany.Parmap.parmap ~core_pin:true ncores (fun lambda ->
+  Parany.Parmap.parmap ncores (fun lambda ->
       let auc = eval_solution_indexed_brute kernel indexed_mols lambda in
       (lambda, auc)
     ) lambdas
