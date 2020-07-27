@@ -70,7 +70,7 @@ let score_one_single kernel n_acts n_decs bwidth mols_bst test_mol =
   let name = FpMol.get_name test_mol in
   let act_contrib, dec_contrib =
     score_one_single_raw kernel n_acts n_decs bwidth mols_bst test_mol in
-  let score = act_contrib -. dec_contrib in
+  let score = Utls.score_mol act_contrib dec_contrib in
   SL.create name score
 
 (* variables to monitor optimization progress *)
@@ -85,7 +85,7 @@ let eval_solution_indexed ncores kernel indexed_mols params _gradient =
   (* we don't have a gradient => _gradient *)
   let bwidth = params.(0) in
   let score_labels =
-    L.parmap ncores (
+    Parany.Parmap.parmap ncores (
       Indexed_mol.score kernel bwidth
     ) indexed_mols in
   let perf_metric =
@@ -170,7 +170,7 @@ let bandwidth_mine_brute_priv
     nsteps kernel ncores training_set validation_set =
   let indexed_mols = index_molecules ncores training_set validation_set in
   let lambdas = L.frange 0.0 `To 1.0 nsteps in
-  L.parmap ~pin_cores:true ncores (fun lambda ->
+  Parany.Parmap.parmap ncores (fun lambda ->
       let auc = eval_solution_indexed_brute kernel indexed_mols lambda in
       (lambda, auc)
     ) lambdas
@@ -250,7 +250,7 @@ let only_test_single maybe_ab ?(no_sort = false)
     Bstree.(create 50 Two_bands (A.of_list train_mols)) in
   let test_mols = L.map mol_of_line test_set in
   let score_labels =
-      L.parmap ncores (
+      Parany.Parmap.parmap ncores (
         score_one_single kernel !n_acts !n_decs bwidth mols_bst
       ) test_mols
   in
@@ -285,15 +285,24 @@ let mcc_scan score_labels =
     L.min_max ~cmp:(fun x y ->
         BatFloat.compare (SL.get_score x) (SL.get_score y)
       ) score_labels in
-  let smin, smax = SL.(get_score smin', get_score smax') in
+  let smin, smax =
+    if !Flags.score_fun = Probability then
+      (* the min proba is NaN instead of being 0.0;
+       * since the proba is undefined in parts of the chemical space
+       * when using vanishing kernels *)
+      (0.0, 1.0)
+    else
+      SL.(get_score smin', get_score smax') in
   let thresholds = L.frange smin `To smax 100 in
   let mccs =
     L.map (fun t ->
         let mcc = ROC.mcc t score_labels in
         (t, mcc)
       ) thresholds in
-  let _mcc_min, (threshold, mcc_max) =
-    L.min_max ~cmp:(fun x y -> BatFloat.compare (snd x) (snd y)) mccs in
+  let (_tmin, _mcc_min), (threshold, mcc_max) =
+    L.min_max ~cmp:(fun (_t1, mcc1) (_t2, mcc2) ->
+        BatFloat.compare (mcc1) (mcc2)
+      ) mccs in
   (threshold, mcc_max)
 
 type capping_method =

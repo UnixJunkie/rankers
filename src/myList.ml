@@ -61,26 +61,28 @@ let to_file (fn: string) (to_string: 'a -> string) (l: 'a list): unit =
     )
 
 (* factorize code using parmap *)
-let parmap ?init:(init = fun _ -> ()) ?pin_cores:(pin_cores = false)
-    ?chunksize:(chunksize = 1)
-    (ncores: int) (f: 'a -> 'b) (l: 'a list)
-  : 'b list =
-  if ncores <= 1 then map f l (* don't invoke parmap in vain *)
+let parmapi ?pin_cores:(pin_cores = false)
+    ?(csize = 1) ncores (f: int -> 'a -> 'b) (l: 'a list): 'b list =
+  if ncores <= 1 then mapi f l
   else
-    begin
-      if not pin_cores then Parmap.disable_core_pinning ();
-      Parmap.parmap ~ncores ~init ~chunksize f (Parmap.L l)
-    end
-
-(* factorize code using parmap *)
-let parmapi ?init:(init = fun _ -> ()) ?pin_cores:(pin_cores = false)
-    (ncores: int) (f: int -> 'a -> 'b) (l: 'a list): 'b list =
-  if ncores <= 1 then mapi f l (* don't invoke parmap in vain *)
-  else
-    begin
-      if not pin_cores then Parmap.disable_core_pinning ();
-      Parmap.parmapi ~ncores ~init ~chunksize:1 f (Parmap.L l)
-    end
+    let input = ref l in
+    let i = ref 0 in
+    let demux () = match !input with
+      | [] -> raise Parany.End_of_input
+      | x :: xs ->
+        begin
+          input := xs;
+          let res = !i in
+          incr i;
+          (res, x)
+        end in
+    let output = ref [] in
+    let mux x =
+      output := x :: !output in
+    (* parallel work *)
+    Parany.run ~core_pin:pin_cores ~csize ncores
+      ~demux ~work:(fun (i, x) -> f i x) ~mux;
+    !output
 
 let really_take n l =
   let res = take n l in

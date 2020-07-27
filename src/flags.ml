@@ -15,4 +15,9 @@ let verbose = ref false
 type utility_function = ROC_AUC
                       | PR_AUC
 
-let optim_target = ref ROC_AUC (* the default *)
+let optim_target = ref ROC_AUC (* default *)
+
+type scoring_method = Difference
+                    | Probability
+
+let score_fun = ref Difference (* default *)

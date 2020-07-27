@@ -61,6 +61,6 @@ let score kernel bwidth indexed =
   let n_decs = float (A.length indexed.dec_dists) in
   let act_contrib = act_contribs /. n_acts in
   let dec_contrib = dec_contribs /. n_decs in
-  let score = act_contrib -. dec_contrib in
+  let score = Utls.score_mol act_contrib dec_contrib in
   let name = FpMol.get_name indexed.valid_mol in
   SL.create name score

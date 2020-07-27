@@ -13,12 +13,11 @@ depends: [
   "conf-gnuplot"
   "cpm"
   "dolog" {>= "4.0.0"}
-  "dune"
+  "dune" {>= "1.6"}
   "minicli"
   "molenc"
   "nlopt-ocaml"
-  "parany" {>= "6.0.0"}
-  "parmap"
+  "parany" {>= "10.0.0"}
 ]
 synopsis: "Vanishing Ranking Kernels (VRK)"
 description: """
