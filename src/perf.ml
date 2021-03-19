@@ -49,7 +49,7 @@ module Make (SL: Score_label.SL) = struct
     (nb_actives, nb_decoys, L.rev rev_res)
 
   let evaluate_performance ?noplot:(noplot = false)
-top_n maybe_curve_fn scores_fn score_labels =
+      top_n maybe_curve_fn scores_fn score_labels =
     let for_auc = match top_n with
       | None -> score_labels
       | Some n ->
