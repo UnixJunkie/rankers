@@ -1,0 +1,116 @@
+Rankers install guide
+=====================
+
+Author: Francois Berenger
+Date: 11th July 2022
+
+This rankers version was created to work without the nlopt dependency.
+Currently, installing the dependency nlopt-ocaml is broken.
+
+Example installation instructions on a fresh Debian 11.3 system.
+On Ubuntu Linux, installation should be very similar.
+
+On Mac computers, this software has worked in the past, but
+installation is a pain; hence we don't maintain anymore
+neither recommend this setup.
+
+The Bash shell is assumed for all commands.
+
+Sudo rights are assumed for the user performing the installation.
+
+I) Install system-wide packages
+-------------------------------
+
+$ sudo apt install git opam python3-pip python3-numpy
+
+II) Configure the OCaml package manager
+---------------------------------------
+
+$ opam init -y
+$ eval `opam config env` # path setup for ocaml executables
+                         # might be needed in your ~/.bashrc
+
+III) Install OCaml packages
+---------------------------
+
+# use no-nlopt version of rankers
+$ opam pin add rankers https://github.com/UnixJunkie/rankers/archive/refs/tags/v2.0.8-no-nlopt.tar.gz # !!! answer NO to the question !!!
+$ opam depext -i rankers # answer yes to all questions
+
+II) Install user-space packages
+-------------------------------
+
+$ pip3 install six chemo-standardizer
+
+III) Tests
+----------
+
+Put the molecular standardiser in your PATH.
+
+$ export PATH=$PATH:~/.local/bin # might be needed in your ~/.bashrc
+$ standardiser -h # test the standardizer is available
+
+IV) Encode some molecules
+-------------------------
+
+Get some molecules in the SMILES format:
+
+$ wget https://raw.githubusercontent.com/UnixJunkie/rankers/master/data/tox21_nrar_ligands_std_rand.smi -O dataset.smi
+
+Create a train and a test set.
+
+$ head -5621 dataset.smi > train.smi
+$ tail -1405 dataset.smi > test.smi
+
+Encode those molecules using counted Faulon fingerprint:
+
+$ molenc.sh -i train.smi -o train_01.fp
+
+IF NOT ALL MOLECULES CAN BE ENCODED AT THE SAME TIME,
+YOU MUST REUSE THE ENCODING DICTIONARY THAT WAS CREATED
+WHEN ENCODING THE TRAINING SET; AS IS DONE BELOW USING -d OPTION:
+
+$ molenc.sh -d train_01.fp.dix -i test.smi -o test_01.fp
+
+V) Find optimal bandwidth on the training set
+---------------------------------------------
+
+NOTE THAT ACTIVE MOLECULES IN THE TRAINING MUST BE FLAGGED BY PREFIXING
+THEIR NAME WITH THE STRING: 'active' (remove the quotes).
+
+$ rankers_bwmine -i train_01.txt --brute 101 --NxCV 5
+
+Found Kb=0.72 in my case.
+
+Let's find a good classification threshold:
+
+$ rankers_bwmine -i train_01.fp -kb 0.72 --mcc-scan
+
+Found 'classif. thresh.: 0.045931' in my case.
+Platt(a,b): -57.810546 3.584822
+Those parameters are calculated for the raw score (KDE difference).
+
+V) Process the test set / screen a database
+-------------------------------------------
+
+KDE MODELS ARE NOT SPARSE: YOU MUST KEEP THE WHOLE TRAINING SET AND
+ITS ASSOCIATED OPTIMAL BANDWIDTH FOR LATER USE.
+
+$ rankers_bwexploit -kb 0.72 -i train_01.fp -db test_01.fp -o test_01.scores -a -57.810546 -b 3.584822
+
+The output scores file format is space-separated and for each line:
+---
+<molecule_name> <raw_score> <p_Platt> <p_KDE>
+---
+molecule_name:string
+raw_score:float; KDE difference score
+p_Platt:float: active probability according to Platt model
+p_KDE:float: active probability calculated directly from KDEs
+
+Sort the scores file by most-likely "active" to least-likely:
+
+$ sort -n -r -k4 test_01.scores -o test_01_sorted.scores
+
+If the training set is any useful to screen the test set and
+if all calculations were done correctly, the file 'test_01_sorted.scores'
+should have more "actives" at the top than at the bottom.
