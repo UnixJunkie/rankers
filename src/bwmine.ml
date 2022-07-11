@@ -42,8 +42,9 @@ let main () =
   Log.info "start";
   let argc, args = CLI.init () in
   let show_help = CLI.get_set_bool ["-h";"--help"] args in
-  let max_optim_steps_def = 150 in
+  let _max_optim_steps_def = 150 in
   let train_portion_def = 0.8 in
+  (* "[-n <int>]: max number of heuristic optim. steps; default=%d\n" *)
   if argc = 1 || show_help then
     (eprintf "usage:\n\
               %s -i <train.txt>\n  \
@@ -55,7 +56,6 @@ let main () =
               [--train <train.txt>]: training set (overrides -p)\n  \
               [--valid <valid.txt>]: validation set (overrides -p)\n  \
               [--test <test.txt>]: test set (overrides -p)\n  \
-              [-n <int>]: max number of heuristic optim. steps; default=%d\n  \
               [--brute <int>]: number of brute optim. steps\n  \
               [--NxCV <int>]: number of folds of cross validation\n  \
               (also requires --brute)\n  \
@@ -74,7 +74,7 @@ let main () =
               [--noplot]: turn off gnuplot\n  \
               [-v]: verbose/debug mode\n  \
               [-h|--help]: show this help message\n"
-       Sys.argv.(0) train_portion_def max_optim_steps_def;
+       Sys.argv.(0) train_portion_def (* max_optim_steps_def *);
      exit 1);
   let input_fn = CLI.get_string_opt ["-i"] args in
   let scores_fn = CLI.get_string_def ["-o"] args "/dev/null" in
@@ -91,7 +91,7 @@ let main () =
   let k_str = CLI.get_string_def ["-k"] args "biw" in
   let kb = CLI.get_float_opt ["-kb"] args in
   let kernel = Kernel.of_string k_str in
-  let nsteps = CLI.get_int_def ["-n"] args max_optim_steps_def in
+  (* let nsteps = CLI.get_int_def ["-n"] args max_optim_steps_def in *)
   let brute_steps = CLI.get_int_opt ["--brute"] args in
   let nfolds = CLI.get_int_opt ["--NxCV"] args in
   let ncores = CLI.get_int_def ["-np"] args 1 in
@@ -166,8 +166,9 @@ let main () =
         | (None, Some _n_folds) ->
           failwith "Bwmine: --NxCV also requires --brute"
         | (None, None) ->
-          Common.bandwidth_mine_heuristic
-            nsteps kernel ncores train validate
+          failwith "NLopt not available"
+          (* Common.bandwidth_mine_heuristic
+           *   nsteps kernel ncores train validate *)
       end in
   Log.info "Kb: %f valAUC: %.3f" k val_auc;
   if early_exit || BatOption.is_some nfolds then

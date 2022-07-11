@@ -107,37 +107,37 @@ let eval_solution_indexed_brute kernel indexed_mols bwidth =
    | ROC_AUC -> ROC.auc
    | PR_AUC -> ROC.pr_auc) score_labels
 
-let optimize_global_bandwidth max_evals ncores kernel indexed_mols =
-  reset_iter_and_auc ();
-  Nlopt.(
-    (* local optimizer that will be passed to the global one *)
-    let local = create sbplx 1 in (* local, gradient-free *)
-    set_max_objective local
-      (eval_solution_indexed ncores kernel indexed_mols);
-    (* I don't set parameter bounds on the local optimizer, I guess
-     * the global optimizer handles this *)
-    (* hard/stupid stop conditions *)
-    set_stopval local 1.0; (* max AUC *)
-    (* smart stop conditions *)
-    set_ftol_abs local 0.0001;
-    (* I also do not provide an initial guess for the local optimizer *)
-    (* global optimizer that will use the local one *)
-    let global = create auglag 1 in (* global *)
-    set_local_optimizer global local;
-    set_max_objective global
-      (eval_solution_indexed ncores kernel indexed_mols);
-    (* bandwidth is in [0..1] *)
-    set_lower_bounds global [| 0.01 |];
-    set_upper_bounds global [| 1.0 |];
-    (* hard/stupid stop conditions *)
-    set_stopval global 1.0; (* max AUC *)
-    set_maxeval global max_evals; (* max number of AUC calls *)
-    let initial_guess = [| 0.5 |] in
-    let stop_cond, params, val_auc = optimize global initial_guess in
-    Log.info "optimize_global_bandwidth: %s" (string_of_result stop_cond);
-    let kb = params.(0) in
-    (kb, val_auc)
-  )
+(* let optimize_global_bandwidth max_evals ncores kernel indexed_mols =
+ *   reset_iter_and_auc ();
+ *   Nlopt.(
+ *     (\* local optimizer that will be passed to the global one *\)
+ *     let local = create sbplx 1 in (\* local, gradient-free *\)
+ *     set_max_objective local
+ *       (eval_solution_indexed ncores kernel indexed_mols);
+ *     (\* I don't set parameter bounds on the local optimizer, I guess
+ *      * the global optimizer handles this *\)
+ *     (\* hard/stupid stop conditions *\)
+ *     set_stopval local 1.0; (\* max AUC *\)
+ *     (\* smart stop conditions *\)
+ *     set_ftol_abs local 0.0001;
+ *     (\* I also do not provide an initial guess for the local optimizer *\)
+ *     (\* global optimizer that will use the local one *\)
+ *     let global = create auglag 1 in (\* global *\)
+ *     set_local_optimizer global local;
+ *     set_max_objective global
+ *       (eval_solution_indexed ncores kernel indexed_mols);
+ *     (\* bandwidth is in [0..1] *\)
+ *     set_lower_bounds global [| 0.01 |];
+ *     set_upper_bounds global [| 1.0 |];
+ *     (\* hard/stupid stop conditions *\)
+ *     set_stopval global 1.0; (\* max AUC *\)
+ *     set_maxeval global max_evals; (\* max number of AUC calls *\)
+ *     let initial_guess = [| 0.5 |] in
+ *     let stop_cond, params, val_auc = optimize global initial_guess in
+ *     Log.info "optimize_global_bandwidth: %s" (string_of_result stop_cond);
+ *     let kb = params.(0) in
+ *     (kb, val_auc)
+ *   ) *)
 
 let index_molecules ncores training_set validation_set =
   let actives, decoys =
@@ -155,13 +155,13 @@ let index_molecules ncores training_set validation_set =
   printf "processed: %d/%d\n%!" n n;
   res
 
-(* find a good bandwidth using a global optimization heuristic *)
-let bandwidth_mine_heuristic
-    max_evals kernel ncores training_set validation_set =
-  let indexed_mols = index_molecules ncores training_set validation_set in
-  (* ncores=1 because PARALLELIZATION IN THERE DOES NOT ACCELERATE
-     eval_solution_indexed's granularity is too fine/efficient *)
-  optimize_global_bandwidth max_evals 1 kernel indexed_mols
+(* (\* find a good bandwidth using a global optimization heuristic *\)
+ * let bandwidth_mine_heuristic
+ *     max_evals kernel ncores training_set validation_set =
+ *   let indexed_mols = index_molecules ncores training_set validation_set in
+ *   (\* ncores=1 because PARALLELIZATION IN THERE DOES NOT ACCELERATE
+ *      eval_solution_indexed's granularity is too fine/efficient *\)
+ *   optimize_global_bandwidth max_evals 1 kernel indexed_mols *)
 
 let bandwidth_mine_brute_priv
     nsteps kernel ncores training_set validation_set =
