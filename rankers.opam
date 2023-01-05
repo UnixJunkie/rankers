@@ -7,6 +7,7 @@ dev-repo: "git+https://github.com/UnixJunkie/rankers.git"
 license: "BSD-3-Clause"
 build: ["dune" "build" "-p" name "-j" jobs]
 depends: [
+  "ocaml" {>= "5.0.0"}
   "base-unix"
   "batteries"
   "bst"
@@ -17,7 +18,7 @@ depends: [
   "minicli" {>= "5.0.0"}
   "molenc"
   "nlopt-ocaml"
-  "parany" {>= "11.0.0"}
+  "parany" {>= "13.0.1"}
 ]
 synopsis: "Vanishing Ranking Kernels (VRK)"
 description: """
