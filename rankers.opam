@@ -9,10 +9,10 @@ build: ["dune" "build" "-p" name "-j" jobs]
 depends: [
   "ocaml" {>= "5.0.0"}
   "base-unix"
-  "batteries"
+  "batteries" {>= "2.9.0"}
   "bst"
   "conf-gnuplot"
-  "cpm"
+  "cpm" {>= "10.0.0"}
   "dolog" {>= "4.0.0"}
   "dune" {>= "1.6"}
   "minicli" {>= "5.0.0"}
